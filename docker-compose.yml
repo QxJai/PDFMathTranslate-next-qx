@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: script/Dockerfile.Api
+    image: pdf2zh-api:latest
+    container_name: pdf2zh-api
+    ports:
+      - "8000:8000"
+    environment:
+      # === Choose ONE engine below ===
+      # -- OpenAI (recommended example) --
+      PDF2ZH_OPENAI: "true"
+      PDF2ZH_OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      # Optional base URL for compatible endpoints
+      # PDF2ZH_OPENAI_BASE_URL: "https://api.openai.com/v1"
+      # Model name
+      PDF2ZH_OPENAI_MODEL: "gpt-4o-mini"
+
+      # -- SiliconFlow (alternative) --
+      # PDF2ZH_SILICONFLOW: "true"
+      # PDF2ZH_SILICONFLOW_API_KEY: "${SILICONFLOW_API_KEY}"
+      # PDF2ZH_SILICONFLOW_MODEL: "Qwen/Qwen2.5-7B-Instruct"
+
+      # Common options
+      PDF2ZH_LANG_IN: "en"
+      PDF2ZH_LANG_OUT: "zh"
+      PDF2ZH_QPS: "10"
+      PDF2ZH_REPORT_INTERVAL: "0.2"
+    volumes:
+      - ./data:/data
+      - ./.cache:/.cache
+    restart: unless-stopped
+
+

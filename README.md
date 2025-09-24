@@ -117,6 +117,55 @@ For detailed explanations, please refer to our document about [Advanced Usage](h
 - [Python API](./docs/APIS.md#api-python), how to use the program in other Python programs
 - [HTTP API](./docs/APIS.md#api-http), how to communicate with a server with the program installed -->
 
+<h3 id="httpapi">HTTP API (FastAPI) — Quick Start</h3>
+
+> [!TIP]
+>
+> From v2.6.x, a lightweight HTTP API is bundled for server usage. It wraps the same translation pipeline and supports async progress streaming and file download.
+
+1) Build API image (single container)
+
+```bash
+docker build -f script/Dockerfile.Api -t pdf2zh-api:latest .
+```
+
+2) Run (Windows PowerShell example)
+
+```bash
+docker run -d --name pdf2zh-api -p 8000:8000 ^
+  -e PDF2ZH_SILICONFLOW=true ^
+  -e PDF2ZH_SILICONFLOW_API_KEY=YOUR_KEY ^
+  -e PDF2ZH_LANG_IN=en -e PDF2ZH_LANG_OUT=zh -e PDF2ZH_QPS=10 ^
+  -v "F:\\pdf2zh-data:/data" -v "F:\\pdf2zh-cache:/.cache" pdf2zh-api:latest
+```
+
+3) Use API
+
+- Submit task
+  ```bash
+  curl -X POST http://localhost:8000/v1/translate -F "file=@example.pdf" -F "options={\"pdf\":{\"pages\":\"1-\"}}"
+  # {"task_id":"<id>"}
+  ```
+- Watch progress (SSE)
+  ```bash
+  curl http://localhost:8000/v1/translate/<id>/events
+  ```
+- Query status
+  ```bash
+  curl http://localhost:8000/v1/translate/<id>/status
+  ```
+- Download result
+  ```bash
+  curl -L http://localhost:8000/v1/translate/<id>/result?type=mono --output mono.pdf
+  curl -L http://localhost:8000/v1/translate/<id>/result?type=dual --output dual.pdf
+  ```
+- Cancel task
+  ```bash
+  curl -X DELETE http://localhost:8000/v1/translate/<id>
+  ```
+
+Environment variables (prefix `PDF2ZH_`) map to settings. For example, select engine via `PDF2ZH_SILICONFLOW=true` and `PDF2ZH_SILICONFLOW_API_KEY=...`. Output directory defaults to `/data` and is persisted via volume.
+
 <h2 id="langcode">Language Code</h2>
 
 If you don't know what code to use to translate to the language you need, check out [this documentation](https://pdf2zh-next.com/advanced/Language-Codes.html)
