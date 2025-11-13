@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi import File
 from fastapi import HTTPException
 from fastapi import UploadFile
+from fastapi import Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
@@ -131,8 +132,15 @@ async def _build_settings_from_options(options: dict[str, Any] | None, output_di
                 raise HTTPException(status_code=400, detail=f"Invalid options JSON: {e}")
         if not isinstance(options, dict):
             raise HTTPException(status_code=400, detail="options must be dict or JSON string")
+        # parse_dict_vars will normalize keys internally (convert to uppercase)
         merged_cli = cm.parse_dict_vars(dict_vars=options)
     merged = cm.merge_settings([merged_cli, env_vars])
+    
+    # Debug logging
+    logger.debug(f"Options from request: {options}")
+    logger.debug(f"Parsed CLI settings: {merged_cli}")
+    logger.debug(f"Merged settings: {merged}")
+    
     try:
         # Build CLI model then convert to SettingsModel
         cli_model = CLIEnvSettingsModel(**merged)
@@ -243,7 +251,10 @@ async def _run_translation(task: TaskState, settings: SettingsModel) -> None:
 
 
 @app.post("/v1/translate")
-async def submit_translate(file: UploadFile = File(...), options: str | None = None):
+async def submit_translate(
+    file: UploadFile = File(...),
+    options: str | None = Form(None),
+):
     task_id = uuid.uuid4().hex
     base_dir = _get_base_output_dir()
     task_dir = base_dir / task_id
